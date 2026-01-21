@@ -1,0 +1,252 @@
+import React, { useState } from 'react';
+import { Calculator, Radio } from 'lucide-react';
+
+export default function AntennaCoverageCalculator() {
+  const [beamwidth, setBeamwidth] = useState(28);
+  const [distance, setDistance] = useState(1);
+  const [eutWidth, setEutWidth] = useState(50.11);
+  const [eutHeight, setEutHeight] = useState(20.93);
+  const [eutDepth, setEutDepth] = useState(20.04);
+
+  // Calculate beam radius and coverage
+  const calculateCoverage = (bw, dist) => {
+    const radiusMeters = dist * Math.tan((bw / 2) * Math.PI / 180);
+    const diameterMeters = 2 * radiusMeters;
+    return {
+      radius: radiusMeters,
+      diameter: diameterMeters,
+      radiusCm: radiusMeters * 100,
+      diameterCm: diameterMeters * 100
+    };
+  };
+
+  // Calculate number of positions needed
+  const calculatePositions = (eutDim, coverage) => {
+    return Math.ceil(eutDim / coverage);
+  };
+
+  const coverage = calculateCoverage(beamwidth, distance);
+  
+  // Calculate positions for each face
+  const frontPositionsH = calculatePositions(eutWidth, coverage.diameterCm);
+  const frontPositionsV = calculatePositions(eutHeight, coverage.diameterCm);
+  const frontTotal = frontPositionsH * frontPositionsV;
+
+  // For RE102: 4 azimuths (front, back, left, right), 2 polarizations
+  const totalRE102Positions = 4 * 2 * frontTotal;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Radio className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-gray-800">Antenna Coverage & Position Calculator</h1>
+          </div>
+          <p className="text-gray-600 mb-6">Calculate antenna beam coverage and required test positions for MIL-STD-461G RE102</p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Antenna Parameters */}
+            <div className="bg-indigo-50 rounded-lg p-4">
+              <h2 className="text-xl font-semibold text-indigo-900 mb-4 flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                Antenna Parameters
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    3dB Beamwidth (degrees)
+                  </label>
+                  <input
+                    type="number"
+                    value={beamwidth}
+                    onChange={(e) => setBeamwidth(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    step="0.1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Test Distance (meters)
+                  </label>
+                  <input
+                    type="number"
+                    value={distance}
+                    onChange={(e) => setDistance(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    step="0.1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* EUT Dimensions */}
+            <div className="bg-green-50 rounded-lg p-4">
+              <h2 className="text-xl font-semibold text-green-900 mb-4">EUT Dimensions</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Width (cm) - Forward facing
+                  </label>
+                  <input
+                    type="number"
+                    value={eutWidth}
+                    onChange={(e) => setEutWidth(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Height (cm)
+                  </label>
+                  <input
+                    type="number"
+                    value={eutHeight}
+                    onChange={(e) => setEutHeight(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Depth (cm)
+                  </label>
+                  <input
+                    type="number"
+                    value={eutDepth}
+                    onChange={(e) => setEutDepth(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Beam Coverage Results */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Beam Coverage</h2>
+            
+            <div className="space-y-3">
+              <div className="bg-blue-50 rounded p-3">
+                <p className="text-sm text-gray-600">Beam Radius</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {coverage.radius.toFixed(3)} m
+                  <span className="text-lg ml-2">({coverage.radiusCm.toFixed(2)} cm)</span>
+                </p>
+              </div>
+
+              <div className="bg-blue-50 rounded p-3">
+                <p className="text-sm text-gray-600">Beam Diameter (Coverage)</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {coverage.diameter.toFixed(3)} m
+                  <span className="text-lg ml-2">({coverage.diameterCm.toFixed(2)} cm)</span>
+                </p>
+              </div>
+
+              <div className="mt-4 p-3 bg-gray-50 rounded">
+                <p className="text-xs font-mono text-gray-600">Formula:</p>
+                <p className="text-sm font-mono text-gray-800">
+                  Diameter = 2 × d × tan(θ/2)
+                </p>
+                <p className="text-sm font-mono text-gray-800 mt-1">
+                  = 2 × {distance} × tan({beamwidth}/2)
+                </p>
+                <p className="text-sm font-mono text-gray-800 mt-1">
+                  = {coverage.diameter.toFixed(3)} m
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Position Requirements */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Required Positions</h2>
+            
+            <div className="space-y-4">
+              <div className="border-l-4 border-orange-500 pl-4">
+                <p className="text-sm text-gray-600 mb-2">Front Face ({eutWidth} × {eutHeight} cm)</p>
+                <div className="flex gap-4 text-sm">
+                  <span>Horizontal: <strong>{frontPositionsH}</strong></span>
+                  <span>Vertical: <strong>{frontPositionsV}</strong></span>
+                </div>
+                <p className="text-lg font-bold text-orange-600 mt-1">
+                  {frontTotal} position{frontTotal !== 1 ? 's' : ''} per polarization
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-4 text-white mt-4">
+                <p className="text-sm opacity-90 mb-1">Total RE102 Test Positions</p>
+                <p className="text-sm opacity-75 mb-2">(4 azimuths × 2 polarizations)</p>
+                <p className="text-4xl font-bold">{totalRE102Positions}</p>
+              </div>
+
+              <div className="text-xs text-gray-500 mt-3 p-2 bg-gray-50 rounded">
+                <strong>Calculation:</strong> Positions = ceil(EUT_dimension / coverage_diameter)<br/>
+                Multiply by 4 azimuths and 2 polarizations for complete RE102 coverage.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Visual Indicator */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Coverage vs EUT Size</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="w-32 text-sm text-gray-600">Beam Coverage:</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                <div 
+                  className="bg-blue-500 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                  style={{width: '100%'}}
+                >
+                  {coverage.diameterCm.toFixed(1)} cm
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-32 text-sm text-gray-600">EUT Width:</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                <div 
+                  className={`h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold ${
+                    eutWidth > coverage.diameterCm ? 'bg-red-500' : 'bg-green-500'
+                  }`}
+                  style={{width: `${Math.min(100, (eutWidth / coverage.diameterCm) * 100)}%`}}
+                >
+                  {eutWidth} cm
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-32 text-sm text-gray-600">EUT Height:</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                <div 
+                  className={`h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold ${
+                    eutHeight > coverage.diameterCm ? 'bg-red-500' : 'bg-green-500'
+                  }`}
+                  style={{width: `${Math.min(100, (eutHeight / coverage.diameterCm) * 100)}%`}}
+                >
+                  {eutHeight} cm
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-4">
+            {eutWidth > coverage.diameterCm || eutHeight > coverage.diameterCm 
+              ? '⚠️ EUT dimensions exceed beam coverage - multiple positions required'
+              : '✓ EUT fits within single beam position'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
